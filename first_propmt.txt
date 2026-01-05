@@ -1,0 +1,393 @@
+You are a senior full-stack engineer working in my repo. Build a UK-focused PROPERTY MAINTENANCE SaaS for small landlords and local letting agents, including an AI tenant portal and AI work-assist for staff. I use the latest Angular (standalone, signals-first) and best practices for that version. I use Cursor IDE. Produce code, not theory. Make safe choices and log assumptions in a single /docs/ASSUMPTIONS.md.
+
+KEYWORD: property maintenance
+
+========================================================
+0) DELIVERABLES (create these files and keep them updated)
+========================================================
+- /docs/README.md
+- /docs/ASSUMPTIONS.md
+- /docs/ARCHITECTURE.md
+- /docs/SECURITY.md
+- /docs/API.md (OpenAPI summary + examples)
+- /docs/AI.md (prompts, JSON schemas, guardrails, evals)
+- /docs/DB.md (schema + RLS notes)
+- /docs/UK_COMPLIANCE.md (what we track + reminders; not legal advice)
+- /docs/RUNBOOK.md (local dev, staging, prod, troubleshooting)
+- /docs/ROADMAP.md (MVP -> Pro)
+- /docs/TESTING.md
+
+=================================
+1) PRODUCT SCOPE (build all of it)
+=================================
+System: "MaintainUK" (working name)
+Audience:
+- Landlords (1–50 properties)
+- Local letting agents (50–2,000 units)
+- Contractors (sole traders/small firms)
+- Tenants/occupiers
+
+Core outcomes:
+- Reduce coordinator workload via AI triage + drafting + summaries.
+- Improve first-time fix by collecting better info at intake.
+- Track compliance reminders (UK basics) + documents.
+
+Modules:
+A) Auth + orgs
+B) Properties + tenancies
+C) Maintenance tickets + work orders + quotes + invoices
+D) Messaging + timeline + notifications
+E) Contractor portal/app
+F) Tenant portal + AI intake
+G) Compliance tracker + reminders
+H) Reporting
+I) AI Orchestration service (work-assist + portal)
+
+Deployment: SaaS (hosted). Multi-tenant by organisation.
+
+Tech constraints:
+- Frontend: Angular latest, standalone components, signals, RxJS only where needed, Angular Material + Tailwind, strict types, ESLint, route-level code splitting.
+- Backend: Choose ONE stack and implement fully:
+  Option 1 (preferred): NestJS + Prisma + Postgres
+  Option 2: .NET 8 Web API + EF Core + Postgres
+Pick Option 1 unless there’s a strong reason not to; document the reason.
+- DB: Postgres.
+- Auth: email magic link + password, plus optional SSO later.
+- Queue: use a lightweight queue (e.g., BullMQ/Redis) for AI jobs + invoice processing. If you choose managed alternative, document it.
+- File storage: S3-compatible (MinIO local, S3 in prod).
+- Email: SendGrid or Resend; SMS optional (Twilio) behind feature flag.
+- AI provider: abstraction layer; support OpenAI-style chat/completions AND a local/offline mock for dev.
+
+Non-negotiables:
+- Audit log for key actions.
+- Role-based access with least privilege.
+- Strict JSON schemas for AI outputs.
+- No AI actions that commit spend or contact tenants/contractors without explicit user opt-in.
+
+=================================================
+2) USER ROLES + PERMISSIONS (implement as RBAC)
+=================================================
+Roles:
+- ORG_ADMIN (agency owner/landlord)
+- PROPERTY_MANAGER
+- MAINT_COORDINATOR
+- CONTRACTOR
+- TENANT
+- OWNER_VIEW (for agent-managed owners; view + approvals)
+
+RBAC rules:
+- Tenant can only see their tenancy + tickets for that unit.
+- Contractor can only see assigned work orders.
+- Owners can view related properties and approve quotes within limits.
+
+Add per-role permission matrix in /docs/SECURITY.md and enforce it in backend guards/middleware.
+
+=========================================
+3) DATA MODEL (design + implement migrations)
+=========================================
+Entities (minimum):
+- Organisation { id, name, type[LANDLORD|AGENT], settings(json), createdAt }
+- User { id, orgId, email, name, role, phone?, status, createdAt }
+- Property { id, orgId, name, address fields UK, notes, timezone, createdAt }
+- Unit { id, propertyId, label, floor?, bedroomCount?, accessNotesEncrypted?, createdAt }
+- Tenancy { id, unitId, tenantUserId, startDate, endDate?, isActive, emergencyContact?, createdAt }
+- ContractorProfile { id, orgId, userId?, companyName, trades[], postcodeAreas[], insuranceDocs[], ratingStats, createdAt }
+- MaintenanceTicket {
+    id, orgId, unitId, createdByUserId,
+    category, priority, status,
+    description, aiSummary?, aiConfidence?,
+    preferredTimeslots(json),
+    media(json),
+    slaTargetAt, createdAt, updatedAt
+  }
+- TicketTimelineEvent { id, ticketId, type, actorUserId?, payload(json), createdAt }
+- WorkOrder {
+    id, ticketId, contractorId,
+    status, scheduledStart?, scheduledEnd?,
+    quoteRequired boolean, capAmountPence?,
+    completionNotes?, completionMedia(json),
+    createdAt, updatedAt
+  }
+- Quote { id, workOrderId, amountPence, breakdown(json), status, approvedByUserId?, approvedAt?, createdAt }
+- Invoice { id, workOrderId, supplierName, amountPence, vatPence?, invoiceDate, dueDate?, status, fileKey, extracted(json), createdAt }
+- Payment { id, invoiceId, method, paidAt?, ref?, createdAt }
+- ComplianceItem {
+    id, orgId, propertyId, unitId?,
+    type [GAS_SAFETY|EICR|EPC|SMOKE_ALARM|CO_ALARM|OTHER],
+    dueDate, completedDate?, status,
+    documentKey?, notes?, reminders(json),
+    createdAt
+  }
+- Notification { id, userId, channel[email|sms|inapp], templateKey, payload(json), status, createdAt }
+- AuditLog { id, orgId, actorUserId?, entityType, entityId, action, before(json), after(json), ip?, ua?, createdAt }
+
+AI entities:
+- AiJob { id, orgId, type, status, input(json), output(json), error?, createdAt, finishedAt? }
+- AiPromptTemplate { id, key, version, model, systemPrompt, userPrompt, outputSchema(json), guardrails(json), isActive }
+
+Security:
+- Encrypt sensitive fields at rest (access notes, keysafe codes). Use envelope encryption and document it.
+
+Write the full Prisma/EF schema and generate migrations.
+
+====================================================
+4) CORE WORKFLOWS (implement end-to-end, tested)
+====================================================
+A) Tenant reports repair:
+- Tenant uses portal wizard (non-AI fallback form must exist).
+- Upload photos/video.
+- AI triage produces:
+  - category, priority, suggested trade, questions asked, safe steps, structured summary.
+- Ticket created with timeline events.
+- Coordinator sees “Needs review” queue.
+- Auto-assignment rules propose contractor; coordinator approves.
+
+B) Quote -> approval:
+- Contractor can submit quote (with breakdown).
+- System routes to Owner/Manager for approval based on org settings:
+  - approval limit thresholds
+  - auto-approve under X pence
+- Audit every approval.
+
+C) Scheduling + completion:
+- Contractor proposes slots; tenant confirms.
+- Work order scheduled; notifications sent.
+- Contractor marks complete, uploads photos, notes.
+- Tenant can confirm resolved or reopen within N days.
+
+D) Invoice processing:
+- Contractor uploads invoice PDF.
+- System extracts fields (OCR/AI) into draft invoice.
+- Human review required before marking “Approved”.
+- Export/CSV for accounting.
+
+E) Compliance reminders:
+- Track compliance items per property/unit.
+- Reminder schedules 30/14/7 days before due.
+- Dashboard of “At risk” items.
+
+===========================================
+5) FRONTEND (Angular) PAGES + COMPONENTS
+===========================================
+Shared:
+- App shell, role-based nav, org switch (if user belongs to multiple orgs), notifications.
+
+Auth:
+- Login, magic link, reset password.
+
+Landlord/Agent dashboard:
+- KPIs: open tickets, urgent, avg time to assign, spend this month.
+- At-risk compliance items.
+
+Properties:
+- Property list + detail
+- Unit detail (tenancy, access notes)
+- Document vault
+
+Maintenance:
+- Ticket list with filters (status, priority, property)
+- Ticket detail: timeline, media, chat thread, AI summary panel, suggested actions
+- Create ticket (staff)
+- Work order detail: schedule, quote, completion, invoice
+
+Contractor portal:
+- Assigned work orders list
+- Work order detail (accept/decline, schedule, updates, upload quote/invoice)
+
+Tenant portal:
+- My unit
+- Report issue wizard (AI assisted) + status tracking
+- Messaging thread
+
+Compliance:
+- List, create, upload doc, reminders, calendar view
+
+Reporting:
+- Spend by property
+- Contractor performance
+- SLA performance
+
+UI requirements:
+- Clean, responsive, mobile-first for tenant/contractor.
+- Angular Material + Tailwind. Prefer Material components, Tailwind for layout.
+- Use signals for state; use inject(), standalone, typed forms.
+- Use route resolvers sparingly; prefer component-level data services.
+- Provide skeleton loaders and empty states.
+
+=================================================
+6) BACKEND API (REST) + REALTIME (optional)
+=================================================
+Build REST endpoints first (OpenAPI documented).
+WebSockets optional for live updates; if you skip, use polling and document.
+
+Endpoints (minimum):
+- /auth/* (login, magic link, reset, me)
+- /orgs, /users
+- /properties, /units, /tenancies
+- /tickets, /tickets/:id/timeline, /tickets/:id/messages
+- /work-orders, /work-orders/:id/quotes, /work-orders/:id/invoices
+- /compliance-items
+- /files/presign-upload, /files/download
+- /reports/*
+- /ai/* (see AI section)
+
+Validation:
+- Use DTO validation (class-validator) or FluentValidation.
+- Return consistent error format.
+
+=====================================
+7) AI FEATURES (work-assist + portal)
+=====================================
+Design an AI layer that is safe and structured.
+
+7.1 AI TENANT PORTAL (intake assistant)
+Goals:
+- Collect complete info.
+- Reduce back-and-forth.
+- Spot emergencies.
+
+Flows:
+- Tenant starts “Report an issue”.
+- AI asks 3–8 targeted questions based on category.
+- AI requests specific photos (e.g., boiler display, leak source, fuse box label) and optional video.
+- AI outputs strict JSON with:
+  {
+    "category": "...",
+    "priority": "EMERGENCY|URGENT|ROUTINE",
+    "suggestedTrade": "...",
+    "tenantSafeSteps": ["..."],
+    "mustCallEmergency": boolean,
+    "summary": "short",
+    "details": {
+      "symptoms": [],
+      "location": "...",
+      "whenStarted": "...",
+      "accessConstraints": "...",
+      "utilitiesAffected": [],
+      "attachmentsExpected": []
+    },
+    "confidence": 0-1,
+    "followUpQuestions": []
+  }
+
+Rules:
+- Emergency overrides (deterministic):
+  - gas smell -> mustCallEmergency
+  - flooding near electrics -> mustCallEmergency
+  - etc (define list in /docs/AI.md)
+
+Implementation:
+- Frontend chat-like wizard, but store answers in a structured form model.
+- Backend AI endpoint returns next questions + final JSON.
+
+7.2 AI WORK-ASSIST (staff)
+Features:
+- Auto-classify tickets created by email/manual entry.
+- Summarise ticket timeline into “last update / next action / risks”.
+- Draft messages:
+  - to tenant
+  - to contractor
+  - to owner for quote approval
+- Suggest assignment:
+  - pick top 3 contractors with reasons
+- Duplicate detection:
+  - “Multiple units same issue” flag
+
+Output schemas (strict JSON for each tool):
+- classification schema
+- summary schema
+- message_draft schema
+- assignment_suggestions schema
+- duplicate_cluster schema
+
+7.3 Invoice extraction (AI/OCR)
+- Ingest PDF -> OCR -> extract:
+  supplierName, invoiceNo, invoiceDate, dueDate, subtotal, vat, total, lineItems
+- Confidence per field
+- Human review required
+
+7.4 AI Orchestration service
+- Single service/class handling:
+  - model selection
+  - prompt templates by key/version
+  - JSON schema validation (fail closed)
+  - retries with backoff
+  - redaction of sensitive data before sending to AI
+  - audit log every AI request/response
+- Add eval tests:
+  - golden set of 30 sample tickets
+  - verify schema validity + emergency detection
+  - regression tests in CI
+
+=================================
+8) AUTOMATION / RULE ENGINE
+=================================
+Implement simple rules (non-AI):
+- Auto-assign by category + postcode area + contractor trade
+- Auto-escalate if SLA nearing breach
+- Auto-remind contractors for updates
+- Approval limits for quotes
+
+Expose UI to configure org settings.
+
+==========================
+9) SECURITY / GDPR BASICS
+==========================
+- Tenant data isolation.
+- Encrypt access notes.
+- Signed URLs for files with expiry.
+- Rate limit auth and AI endpoints.
+- Audit logs for everything important.
+- Data retention options per org.
+Document in /docs/SECURITY.md.
+
+=====================
+10) TESTING REQUIREMENTS
+=====================
+- Backend: unit tests for services + integration tests for main workflows.
+- Frontend: component tests for key flows, and e2e smoke tests for:
+  - tenant report issue
+  - coordinator assigns contractor
+  - contractor completes job
+  - invoice upload + extraction
+- Add seed data and a demo script.
+
+====================================
+11) IMPLEMENTATION PLAN (DO THIS NOW)
+====================================
+Step 1: Repo scaffolding
+- Create /apps/web (Angular)
+- Create /apps/api (NestJS)
+- Create /packages/shared (types, zod schemas)
+- Configure lint/test/format
+- Add docker-compose for Postgres, Redis, MinIO
+
+Step 2: DB schema + migrations + seed
+
+Step 3: Auth + RBAC + tenant isolation
+
+Step 4: Maintenance tickets + work orders end-to-end
+
+Step 5: Tenant portal (non-AI) + media upload
+
+Step 6: AI tenant intake (wizard + schemas + guardrails)
+
+Step 7: Staff AI work-assist (summaries, drafts, assignment suggestions)
+
+Step 8: Compliance tracker + reminders
+
+Step 9: Reporting dashboards
+
+Step 10: Hardening (security, logs, monitoring)
+
+===========================================
+12) OUTPUT FORMAT (how you respond in Cursor)
+===========================================
+When you generate code:
+- Provide file paths.
+- Provide complete file contents for new files.
+- For edits, show diffs or full file if simpler.
+- Keep changes small per step.
+- After each step, include how to run it locally and a quick test checklist.
+
+Now start with Step 1: scaffold the repo and docker-compose, then Step 2 schema/migrations, and keep going until the MVP is running end-to-end.

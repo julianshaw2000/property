@@ -1,0 +1,139 @@
+# ======================
+# Environment & Secrets
+# ======================
+.env
+.env.local
+.env.*.local
+*.secret
+*.key
+
+# ======================
+# OS
+# ======================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ======================
+# IDEs
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ======================
+# Node.js
+# ======================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.npm
+.eslintcache
+.node_repl_history
+
+# ======================
+# .NET
+# ======================
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+.vs/
+.vscode/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
+*.pubxml
+
+# ======================
+# Angular
+# ======================
+/apps/web/dist/
+/apps/web/.angular/
+/apps/web/tmp/
+/apps/web/out-tsc/
+/apps/web/coverage/
+/apps/web/.sass-cache/
+/apps/web/connect.lock
+/apps/web/libpeerconnection.log
+/apps/web/testem.log
+/apps/web/typings/
+
+# ======================
+# Testing
+# ======================
+coverage/
+*.cover
+.hypothesis/
+.pytest_cache/
+.nyc_output/
+test-results/
+cypress/screenshots/
+cypress/videos/
+
+# ======================
+# Database
+# ======================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+
+# ======================
+# Docker
+# ======================
+docker-compose.override.yml
+
+# ======================
+# Build artifacts
+# ======================
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
+
+# ======================
+# Temporary files
+# ======================
+tmp/
+temp/
+*.tmp
+
+# ======================
+# Backup files
+# ======================
+*.bak
+*.backup
+backup*.sql
+
+# ======================
+# Local dev scripts & utilities
+# ======================
+db.ps1
+scripts/connect-*.ps1
+apps/api-v2/
+.claude/settings.local.json
+

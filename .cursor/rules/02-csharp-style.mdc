@@ -1,0 +1,21 @@
+# 02-csharp-style.mdc
+
+## 💻 C# Code Style and Structure Rules
+
+### 1. Naming Conventions
+* **Classes, Interfaces, and Enums:** Must use **PascalCase** (e.g., `ProductService`, `IUserRepository`).
+* **Methods, Parameters, and Local Variables:** Must use **camelCase** (e.g., `getProductDetails`, `userId`).
+* **Boolean Variables:** Must include a verb prefix (e.g., `Is`, `Has`, `Can`) (e.g., `isAvailable`, `hasChanges`).
+* **Constants:** Use `const` or `static readonly` and use **PascalCase**.
+
+### 2. Language Features
+* **Prioritize Expression-Bodied Members** for properties, methods, and accessors where appropriate (single line of logic).
+* **Use modern C# features** like `record` types for DTOs and immutable data structures, pattern matching, and null-forgiving operators (`!`) only when necessary and justified.
+
+### 3. Whitespace and Formatting
+* **Use four (4) spaces for indentation.** Never use tabs.
+* **Curly Braces:** Must be placed on a new line (Allman style).
+* **Imports/Usings:** Must be ordered alphabetically and grouped: System/Standard, Third-Party, Local. Separate groups with a single blank line.
+
+### 4. Code Structure
+* **Single Responsibility Principle (SRP):** Methods must be short and focused on a single task. Avoid deep nesting (`if/else` hell) by using early returns/guard clauses.

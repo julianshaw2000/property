@@ -1,0 +1,18 @@
+# 03-error-testing.mdc
+
+## 🛡️ Error Handling and Testing Rules
+
+### 1. Error Handling and Exceptions
+* **Use custom, specific exceptions.** Never use generic exceptions like `System.Exception` in `catch` blocks. (e.g., use `ResourceNotFoundException`, `InvalidInputException`).
+* **API Response Structure:** For API Controllers, convert internal exceptions into standardized **HTTP Status Codes** and a consistent JSON error payload (e.g., problem details format).
+* **Logging:** Ensure all caught exceptions are logged with context (method name, parameters) before re-throwing or handling.
+
+### 2. Testing Coverage
+* **Unit Testing is Mandatory:** All non-trivial Service/Business Logic must be covered by xUnit unit tests.
+* **Test Naming:** Test methods must clearly state the Scenario, Action, and Expected Result (e.g., `Get_ValidId_ReturnsProductDto`).
+* **Test Structure:** All tests must follow the **Arrange-Act-Assert (AAA)** pattern. 
+* **Mocking:** Use a mocking framework (e.g., Moq) to isolate the code under test. Never hit the actual database in unit tests.
+
+### 3. Validation
+* **Separate Validation:** Use a library like FluentValidation in the Service layer to ensure business rules are met *before* calling the Repository or database.
+* **Input Validation:** All input (method parameters, DTOs) must be validated for null checks, bounds, and security concerns (e.g., injection prevention).

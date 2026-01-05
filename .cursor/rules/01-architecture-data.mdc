@@ -1,0 +1,22 @@
+# 01-architecture-data.mdc
+
+## 🎯 Architecture and Data Access Rules
+
+### 1. Project Context and Stack
+* **The project is a .NET Core Web API using Entity Framework Core (EF Core) targeting PostgreSQL.**
+* The primary language is **C# (latest features allowed)**.
+* All data interaction must adhere strictly to the chosen patterns.
+
+### 2. Data Access Pattern
+* **Enforce Repository and Unit of Work (UoW) patterns.** Never allow direct injection or access to the `DbContext` in Controllers or Business Services.
+* Repositories must expose methods that return **`IQueryable<T>`** for deferred execution *only* within the repository layer. The service layer should receive materialized results (`IEnumerable<T>` or DTOs).
+* **UoW must manage transaction scope.** Ensure all related database operations (e.g., a multi-step update) are atomic.
+
+### 3. Entity Framework Core (EF Core) Rules
+* **Use Fluent API for all configuration.** Data Annotations (e.g., `[Required]`, `[Table]`) are strictly forbidden. All configuration must reside in separate `IEntityTypeConfiguration<T>` classes.
+* **Prioritize Asynchronous Operations.** All EF Core calls must use asynchronous methods (e.g., `FirstOrDefaultAsync`, `ToListAsync`, `AddAsync`).
+* **Indexing Rule:** Create composite indexes for columns used in common `WHERE` and `ORDER BY` clauses, especially those used for cursor pagination (`CreatedAt`, `Id`). 
+
+### 4. DTO Mapping
+* **Use DTOs (Data Transfer Objects) for all API communication.** Never expose EF Core entities directly through the Controller.
+* **Use a DTO mapper (e.g., AutoMapper or manual mapping)** between the Repository/Service layer and the Controller.

@@ -1,0 +1,17 @@
+# 02-efcore-architecture.mdc
+
+## 🏛️ Architecture and Configuration Rules
+
+### 1. Separation of Concerns
+* **DbContext Lifetime:** The `DbContext` must be registered as **Scoped** in the Dependency Injection container. It should never be held as a long-lived instance (e.g., in a Singleton service). Use **DbContext Pooling** for performance benefits.
+* **Data Access Layer (DAL):** Isolate all EF Core/LINQ logic within a dedicated Data Access Layer (e.g., Repositories). Controllers and Business Services must communicate via interfaces that return DTOs or simple collections, not `IQueryable<T>` or raw entities.
+
+### 2. Model Configuration
+* **Fluent API Only:** All model configuration (relationships, indexing, column types, constraints) must be defined using the **Fluent API** within `IEntityTypeConfiguration<T>` classes. Data Annotations (like `[Required]`, `[Table]`) are strictly forbidden.
+* **Database Schema:** Explicitly define column data types and lengths (e.g., `HasMaxLength(255)`, `HasColumnType("decimal(18, 2)")`) to avoid the use of slow, default types like `NVARCHAR(MAX)`.
+
+### 3. Asynchronous APIs
+* **Asynchronous I/O:** All database-interacting methods (queries, CUD operations) must be **asynchronous**. Use `ToListAsync`, `FirstOrDefaultAsync`, `SaveChangesAsync`, etc., to ensure the application remains scalable under load.
+
+### 4. Transactions
+* **Unit of Work (UoW):** For operations involving multiple distinct `DbContext` calls that must succeed or fail together, use explicit **Transactions** (`Database.BeginTransaction()`) to guarantee atomicity.

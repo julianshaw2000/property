@@ -1,0 +1,17 @@
+# 03-efcore-indexing-debugging.mdc
+
+## 🔩 Indexing and Debugging Rules
+
+### 1. Database Indexing
+* **Index Every Join/Filter:** Ensure every column used in a `Where`, `OrderBy`, or join condition (`Include`/foreign key lookup) has a corresponding index.
+* **Composite Indexing:** For compound queries that filter by multiple columns, create a **composite index** where the order of columns in the index matches the order in the `Where`/`OrderBy` clause to maximize index utilization. 
+
+### 2. Query Visibility and Debugging
+* **Tag Queries:** Use **`.TagWith("Descriptive Query Name")`** on all complex or frequently executed LINQ queries. This adds a comment to the generated SQL, making it easy to identify the source of the query in database logs or profilers.
+* **Logging:** Configure EF Core logging to output generated SQL during development/testing. Analyze the generated SQL for every new complex query to verify efficiency (e.g., checking for `SELECT *` when only specific columns were needed).
+
+### 3. Concurrency
+* **Optimistic Concurrency:** Implement optimistic concurrency control (using a `[Timestamp]` or `ConcurrencyCheck` column) on entities that are frequently updated by multiple users to prevent silent data corruption.
+
+### 4. Raw SQL Usage
+* **Last Resort:** Writing raw SQL via `FromSqlRaw` is a last resort. It should only be used when LINQ cannot generate an efficient query (e.g., for stored procedures, complex views, or bulk updates where `ExecuteUpdate` is insufficient). The raw SQL must use **parameterized queries** and be validated by a senior developer.

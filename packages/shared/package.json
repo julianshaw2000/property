@@ -1,0 +1,25 @@
+{
+  "name": "@maintainuk/shared",
+  "version": "1.0.0",
+  "description": "Shared types, schemas, and contracts for MaintainUK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "jest"
+  },
+  "keywords": ["maintainuk", "shared", "types"],
+  "author": "MaintainUK",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  }
+}
+

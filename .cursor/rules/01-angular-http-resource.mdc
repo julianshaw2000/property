@@ -1,0 +1,18 @@
+# 01-angular-http-resource.mdc
+
+## 🌐 HTTP and Data Fetching Rules (Signals)
+
+### 1. HTTP Client Preference
+* **Primary Rule: Use `httpResource` for RESTful data fetching.** The classic `HttpClient` should only be used as a fallback for non-standard REST routes (e.g., custom, non-CRUD endpoints) or advanced RxJS flows (e.g., long-polling, complex caching).
+* **Signal Integration:** When fetching data, always expose the state (value, loading, error) as signals provided by `httpResource` (e.g., `resource.value()`, `resource.isLoading()`). 
+
+### 2. Reactive Data Fetching
+* **Automatic Refetching:** Leverage the reactive nature of `httpResource`. For dynamic requests (like pagination or filtering), pass a **signal dependency** (e.g., `currentPage()`, `filterTerm()`) inside the resource definition function.
+* **No Manual Subscriptions:** Component logic must **not** contain manual `subscribe()` or `unsubscribe()` logic for data streams. This must be handled declaratively by the resource itself.
+
+### 3. Resource Location and Type Safety
+* **Resource Definition:** Define `httpResource` constants (e.g., `userResource`, `productResource`) in a dedicated `resources/` folder or co-located with the feature/store they support.
+* **Type Safety:** All resources must be strongly typed using generics (e.g., `httpResource<Product[]>`). Never use `any` or `unknown` for the resource type.
+
+### 4. Error and Loading State
+* **Declarative UI:** Component templates must use the built-in signals (`resource.isLoading()`, `resource.error()`) to conditionally display loading spinners or error messages. Do not manage separate component state flags for this purpose.

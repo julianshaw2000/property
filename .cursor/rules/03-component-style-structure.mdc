@@ -1,0 +1,19 @@
+# 03-component-style-structure.mdc
+
+## 📦 Component Structure and File Rules
+
+### 1. Standalone Components
+* **Use Standalone Components Exclusively.** All new components, directives, and pipes must be standalone. Modules (`NgModule`) should only exist for backward compatibility or when absolutely necessary (e.g., `provideRouter`).
+
+### 2. File Naming Conventions
+* **Kebab-Case Naming:** All file and folder names must use **kebab-case** (e.g., `user-profile.component.ts`).
+* **Co-location:** The component's `.ts`, `.html`, and `.scss` files must share the same base name and be co-located in a single folder named after the component (e.g., `user-profile/user-profile.component.ts`).
+
+### 3. Component Architecture
+* **Component-Level State:** Use **plain `signal()`** for simple, isolated component state (e.g., a counter, a boolean toggle).
+* **Global/Shared State:** For state shared across components or complex feature state, use **NgRx SignalStore** (or similar signal-based state management). Never manage shared state using an injectable service with a plain `signal()` alone. 
+* **`effect()` Usage:** Use `effect()` sparingly and only when necessary to synchronize state with a non-reactive API (e.g., logging, interacting with a third-party library). Avoid using effects to drive component state changes.
+
+### 4. Component Inputs
+* **Use `input()` exclusively:** All component inputs must be defined using the `input()` function. Do not use the legacy `@Input()` decorator.
+* **Input Defaults:** Define sensible default values for all non-required inputs to improve component usage safety.

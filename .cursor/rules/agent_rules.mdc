@@ -1,0 +1,62 @@
+# Cursor Agent Rules – Agent-Driven Execution Loop
+
+## Operating Model
+- Work is executed in small, self-contained Runs
+- One Run = one clear outcome
+- Prefer discard and re-run over patching bad output
+- Speed and correctness matter more than completeness
+
+## Role Boundaries
+- Human defines intent, scope, and constraints
+- Agent writes code only within allowed files
+- Agent must not expand scope or refactor unrelated code
+
+## Coding Standards
+- Use latest Angular best practices
+- Standalone components only
+- Signals-first approach
+- Avoid RxJS unless explicitly required
+- No NgModules
+- No premature abstractions
+- No unnecessary services
+
+## File Safety Rules
+- Only modify files explicitly listed in the prompt
+- Never create new files unless explicitly allowed
+- Never refactor unrelated code
+- Never rename files or folders without permission
+
+## Dependency Rules
+- Do not add new dependencies unless explicitly approved
+- Use only libraries already present in the project
+- Ask before changing configuration files
+
+## Execution Rules
+- Implement the feature end-to-end in a single run
+- Do not stop halfway
+- Do not output pseudocode
+- Output working, compilable code only
+
+## Clarification Policy
+- If requirements are unclear, ask exactly ONE question before coding
+- Do not proceed with assumptions
+
+## Quality Bar
+- Code must compile
+- No console errors
+- Feature must work as described
+- Prefer simple, direct solutions
+
+## Output Discipline
+- Stop immediately once the goal is achieved
+- Do not suggest follow-up improvements
+- Do not refactor “while you’re here”
+
+## Failure Handling
+- If the implementation goes off-track, stop
+- Wait for human correction rather than guessing
+
+## Mindset
+- Treat code as disposable until committed
+- Optimize for fast feedback loops
+- Human review is mandatory before merge

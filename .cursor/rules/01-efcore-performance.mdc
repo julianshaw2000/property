@@ -1,0 +1,19 @@
+# 01-efcore-performance.mdc
+
+## ⚡ Query Performance and Efficiency Rules
+
+### 1. Tracking Behavior
+* **Read-Only Queries:** All data retrieval operations that do not result in a `SaveChangesAsync()` call must use **`.AsNoTracking()`**. This significantly reduces memory usage and tracking overhead. 
+* **Default Behavior:** Configure the `DbContext` to use `QueryTrackingBehavior.NoTracking` globally in `OnConfiguring` or `AddDbContext`, and only use `.AsTracking()` explicitly when necessary for CUD (Create, Update, Delete) operations.
+
+### 2. Data Projection and Shaping
+* **Projection Rule:** Never fetch full entity graphs unless the entire entity is needed. Use **`.Select()`** to project only the required columns directly into a DTO (Data Transfer Object) or anonymous type.
+* **Avoid N+1 Queries:** Eagerly load required related data using **`.Include()`** or **`.ThenInclude()`**. Lazy Loading is strictly forbidden as it leads to multiple, often unintentional, database round-trips (the N+1 problem).
+
+### 3. Complex Queries and Memory
+* **Query Splitting:** For queries involving multiple `Include()` statements that might result in a Cartesian explosion (duplication of rows), use **`.AsSplitQuery()`** to instruct EF Core to generate separate, cleaner SQL queries.
+* **Streaming Large Data:** When retrieving a large result set that doesn't need to be materialized instantly, use **`.AsAsyncEnumerable()`** instead of `.ToListAsync()` to stream data and reduce memory pressure.
+* **Pagination:** Use **Cursor-Based Pagination** (keyset seeking) over offset-based pagination (`Skip`/`Take`) for high-traffic endpoints to ensure stable performance regardless of the offset size.
+
+### 4. Bulk Operations
+* **Bulk Updates/Deletes:** For mass data modification (updating or deleting many rows), use the **`ExecuteUpdate/ExecuteDelete`** methods instead of fetching and tracking every entity. This executes the operation directly in the database.

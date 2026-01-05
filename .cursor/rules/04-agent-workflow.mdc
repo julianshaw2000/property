@@ -1,0 +1,18 @@
+# 04-agent-workflow.mdc
+
+## 🤖 Agent Interaction and Workflow Rules
+
+### 1. Task Planning and Confirmation
+* **Mandatory Planning:** For any request involving more than two file changes or complex logic, you must first provide a **detailed, step-by-step plan** in a numbered list before executing.
+* **Wait for Confirmation:** Always ask for user confirmation before starting code generation after presenting the plan.
+
+### 2. Context and Tool Usage
+* **SEARCH FIRST:** Always use `codebase_search` to locate existing, reusable code (Repositories, DTOs, interfaces) before starting a new implementation.
+* **DO NOT GUESS:** If the required DTO, interface method, or class name is unclear or ambiguous, **stop and ask the user** for the correct name or location.
+
+### 3. Response and Commit Style
+* **Conciseness:** Be direct and professional. Avoid filler, over-friendly language, or self-congratulation. Focus on the result and rationale.
+* **Commit Message Style:** Generated changes must be accompanied by a clear, Conventional Commit message (e.g., `feat(products): implemented cursor pagination`). Use the `fix`, `feat`, `refactor`, or `chore` type prefixes.
+
+### 4. Safety and Security
+* **Security Focus:** When generating API code, prioritize input sanitization and security best practices (e.g., always use parameterized queries, never inject raw user input).

@@ -1,0 +1,16 @@
+# 02-angular-signal-forms.mdc
+
+## 📝 Signal Forms and Validation Rules
+
+### 1. Forms API Preference
+* **Primary Rule: Use Signal Forms (`form()`, `field()`, `array()`) for all new forms.** The legacy Reactive Forms (`FormGroup`, `FormControl`) are considered deprecated for new development.
+* **Model-Driven Typing:** The form structure must be fully derived from a **TypeScript Model** (e.g., an interface or type alias). The `form()` function must infer its type from the initial model object, ensuring strong type safety throughout the form tree.
+
+### 2. Validation and Business Logic
+* **Validation Structure:** Apply all validation declaratively using the **`schema()`** function passed to the `form()` initializer. Do not add validators imperatively after form creation.
+* **Cross-Field Validation:** For validators that depend on other fields (e.g., 'password must match confirm password'), leverage the **reactive context** within the custom validator function (`valueOf(path)`). Do not use imperative methods like `updateValueAndValidity()`.
+* **Asynchronous Validation:** Implement server-side validation using the **`resource()`** utility within the form schema for auto-debounced, reactive server checks (e.g., checking username availability while typing).
+
+### 3. Form Submission
+* **Use `submit()` utility:** Handle form submission using the `submit(form, action)` utility. This ensures the action is only called if the form is valid and automatically manages the `submitting` state and server-side error application.
+* **Server Error Handling:** The submission action must return a `ValidationError` (or array) on failure. The `submit()` utility will automatically apply these errors to the appropriate form fields.
