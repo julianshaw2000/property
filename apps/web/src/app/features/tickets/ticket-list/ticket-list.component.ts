@@ -32,7 +32,7 @@ import { TicketService, Ticket } from '../services/ticket.service';
     <div class="ticket-list-container">
       <div class="header">
         <h1>Maintenance Tickets</h1>
-        <button mat-raised-button color="primary" routerLink="/tickets/create">
+        <button mat-raised-button color="primary" routerLink="/app/tickets/create">
           <mat-icon>add</mat-icon>
           New Ticket
         </button>
@@ -136,7 +136,7 @@ import { TicketService, Ticket } from '../services/ticket.service';
             <div class="no-data">
               <mat-icon>inbox</mat-icon>
               <p>No tickets found</p>
-              <button mat-raised-button color="primary" routerLink="/tickets/create">
+              <button mat-raised-button color="primary" routerLink="/app/tickets/create">
                 Create First Ticket
               </button>
             </div>

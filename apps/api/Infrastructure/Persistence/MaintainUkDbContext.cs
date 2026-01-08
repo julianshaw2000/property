@@ -41,6 +41,14 @@ public class MaintainUkDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    // New admin expansion DbSets
+    public DbSet<Domain.Entities.SubscriptionPlan> SubscriptionPlans => Set<Domain.Entities.SubscriptionPlan>();
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+    public DbSet<FeatureFlagOverride> FeatureFlagOverrides => Set<FeatureFlagOverride>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+    public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -65,6 +73,14 @@ public class MaintainUkDbContext : DbContext
         ConfigureNotification(modelBuilder);
         ConfigureOutboxMessage(modelBuilder);
 
+        // Configure new admin expansion entities
+        ConfigureSubscriptionPlan(modelBuilder);
+        ConfigureFeatureFlag(modelBuilder);
+        ConfigureFeatureFlagOverride(modelBuilder);
+        ConfigureApiKey(modelBuilder);
+        ConfigureWebhook(modelBuilder);
+        ConfigurePlatformSetting(modelBuilder);
+
         // Apply global query filter for multi-tenancy
         ApplyMultiTenantQueryFilter(modelBuilder);
     }
@@ -75,10 +91,30 @@ public class MaintainUkDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => e.PlanId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.LastActivityAt);
+
             entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Slug).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Plan).HasConversion<string>().HasMaxLength(50);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(50);
+            entity.Property(e => e.BillingCycle).HasMaxLength(20);
+            entity.Property(e => e.BrandingPrimaryColor).HasMaxLength(50);
+            entity.Property(e => e.Timezone).HasMaxLength(100);
+            entity.Property(e => e.Locale).HasMaxLength(20);
+
+            // Configure PrimaryAdmin relationship
+            entity.HasOne(e => e.PrimaryAdmin)
+                  .WithMany()
+                  .HasForeignKey(e => e.PrimaryAdminUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure SubscriptionPlan relationship
+            entity.HasOne(e => e.SubscriptionPlan)
+                  .WithMany(p => p.Organisations)
+                  .HasForeignKey(e => e.PlanId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -449,6 +485,113 @@ public class MaintainUkDbContext : DbContext
         });
     }
 
+    private void ConfigureSubscriptionPlan(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Domain.Entities.SubscriptionPlan>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.PriceMonthly).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.PriceAnnually).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Features).HasColumnType("jsonb");
+        });
+    }
+
+    private void ConfigureFeatureFlag(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FeatureFlag>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Key).IsUnique();
+            entity.Property(e => e.Key).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.DefaultValue).HasMaxLength(1000).IsRequired();
+        });
+    }
+
+    private void ConfigureFeatureFlagOverride(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FeatureFlagOverride>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.FlagId, e.OrgId }).IsUnique();
+
+            entity.Property(e => e.Value).HasMaxLength(1000).IsRequired();
+
+            entity.HasOne(e => e.Flag)
+                  .WithMany(f => f.Overrides)
+                  .HasForeignKey(e => e.FlagId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Organisation)
+                  .WithMany(o => o.FeatureFlagOverrides)
+                  .HasForeignKey(e => e.OrgId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private void ConfigureApiKey(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.OrgId);
+            entity.HasIndex(e => e.KeyHash);
+
+            entity.Property(e => e.KeyHash).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.KeyPreview).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(200);
+
+            entity.HasOne(e => e.Organisation)
+                  .WithMany(o => o.ApiKeys)
+                  .HasForeignKey(e => e.OrgId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedByUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedBy)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
+    private void ConfigureWebhook(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Webhook>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.OrgId);
+
+            entity.Property(e => e.Url).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Events).HasColumnType("jsonb").IsRequired();
+            entity.Property(e => e.Secret).HasMaxLength(500).IsRequired();
+
+            entity.HasOne(e => e.Organisation)
+                  .WithMany(o => o.Webhooks)
+                  .HasForeignKey(e => e.OrgId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private void ConfigurePlatformSetting(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PlatformSetting>(entity =>
+        {
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Value).HasColumnType("jsonb").IsRequired();
+
+            entity.HasOne(e => e.UpdatedByUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedBy)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+
     private void ApplyMultiTenantQueryFilter(ModelBuilder modelBuilder)
     {
         // Apply global query filter to all entities that implement IHasOrgId
@@ -475,9 +618,21 @@ public class MaintainUkDbContext : DbContext
 
     private Guid GetCurrentOrgId()
     {
-        // Extract OrgId from JWT claims (will be implemented in Phase 3)
-        // For now, return empty Guid (will be set explicitly in SaveChanges)
-        var orgIdClaim = _httpContextAccessor?.HttpContext?.User?.FindFirst("orgId");
+        var user = _httpContextAccessor?.HttpContext?.User;
+        if (user == null)
+        {
+            return Guid.Empty;
+        }
+
+        // SuperAdmin bypasses org filter
+        var roleClaim = user.FindFirst("role");
+        if (roleClaim?.Value == "SuperAdmin")
+        {
+            return Guid.Empty; // Returns Empty = no filter applied
+        }
+
+        // Regular users: enforce org scoping
+        var orgIdClaim = user.FindFirst("orgId");
         if (orgIdClaim != null && Guid.TryParse(orgIdClaim.Value, out var orgId))
         {
             return orgId;

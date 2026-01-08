@@ -47,7 +47,7 @@ if ($Jobs -or $All) {
 
 if ($Web -or $All) {
     Write-Host "🎨 Starting Frontend..." -ForegroundColor Yellow
-    Set-Location "$scriptDir\apps\web"
+    Set-Location "$scriptDir\apps\web-new"
     Start-Process pwsh -ArgumentList "-NoExit", "-Command", "npm start"
     Set-Location $scriptDir
 }

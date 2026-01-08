@@ -30,7 +30,7 @@ import { UnitService, Unit } from '../../../core/services/unit.service';
   template: `
     <div class="form-container">
       <div class="header">
-        <button mat-icon-button routerLink="/tickets">
+        <button mat-icon-button routerLink="/app/tickets">
           <mat-icon>arrow_back</mat-icon>
         </button>
         <h1>Create New Ticket</h1>
@@ -129,7 +129,7 @@ import { UnitService, Unit } from '../../../core/services/unit.service';
             }
 
             <div class="actions">
-              <button mat-button type="button" routerLink="/tickets">
+              <button mat-button type="button" routerLink="/app/tickets">
                 Cancel
               </button>
               <button

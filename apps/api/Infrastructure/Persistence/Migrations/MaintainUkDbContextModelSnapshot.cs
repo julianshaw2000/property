@@ -22,6 +22,55 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("KeyPreview")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("KeyHash");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("ApiKeys");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -209,6 +258,86 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.HasIndex("TicketId");
 
                     b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.FeatureFlag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DefaultValue")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("FeatureFlags");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FlagId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("FlagId", "OrgId")
+                        .IsUnique();
+
+                    b.ToTable("FeatureFlagOverrides");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Invoice", b =>
@@ -522,11 +651,31 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Property<int>("AiJobLimit")
                         .HasColumnType("integer");
 
+                    b.Property<string>("BillingCycle")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("BillingEmail")
                         .HasColumnType("text");
 
+                    b.Property<string>("BrandingLogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BrandingPrimaryColor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -537,6 +686,12 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PrimaryAdminUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -557,6 +712,14 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Property<string>("SubscriptionStatus")
                         .HasColumnType("text");
 
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("TrialEndsAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -565,8 +728,16 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LastActivityAt");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("PrimaryAdminUserId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("Status");
 
                     b.ToTable("Organisations");
                 });
@@ -667,6 +838,29 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.HasIndex("PaidAt");
 
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.PlatformSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.ToTable("PlatformSettings");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Property", b =>
@@ -838,6 +1032,64 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.SubscriptionPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string[]>("Features")
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxApiCalls")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxStorageGb")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxTickets")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxUsers")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal?>("PriceAnnually")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("PriceMonthly")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("SubscriptionPlans");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.TicketTimelineEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -957,6 +1209,12 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Property<string>("LastName")
                         .HasColumnType("text");
 
+                    b.Property<bool>("MfaEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MfaSecret")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
@@ -982,6 +1240,54 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Webhook", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string[]>("Events")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("FailureCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastFailureAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastSuccessAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("Webhooks");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.WorkOrder", b =>
@@ -1049,6 +1355,24 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("WorkOrders");
                 });
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.ApiKey", b =>
+                {
+                    b.HasOne("MaintainUk.Api.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MaintainUk.Api.Domain.Entities.Organisation", "Organisation")
+                        .WithMany("ApiKeys")
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Organisation");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.AuditLog", b =>
                 {
                     b.HasOne("MaintainUk.Api.Domain.Entities.User", "User")
@@ -1090,6 +1414,25 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Ticket");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.HasOne("MaintainUk.Api.Domain.Entities.FeatureFlag", "Flag")
+                        .WithMany("Overrides")
+                        .HasForeignKey("FlagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MaintainUk.Api.Domain.Entities.Organisation", "Organisation")
+                        .WithMany("FeatureFlagOverrides")
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Flag");
+
+                    b.Navigation("Organisation");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Invoice", b =>
@@ -1173,6 +1516,23 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Organisation", b =>
+                {
+                    b.HasOne("MaintainUk.Api.Domain.Entities.SubscriptionPlan", "SubscriptionPlan")
+                        .WithMany("Organisations")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MaintainUk.Api.Domain.Entities.User", "PrimaryAdmin")
+                        .WithMany()
+                        .HasForeignKey("PrimaryAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PrimaryAdmin");
+
+                    b.Navigation("SubscriptionPlan");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("MaintainUk.Api.Domain.Entities.Invoice", "Invoice")
@@ -1182,6 +1542,16 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.PlatformSetting", b =>
+                {
+                    b.HasOne("MaintainUk.Api.Domain.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Property", b =>
@@ -1272,6 +1642,17 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("Organisation");
                 });
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Webhook", b =>
+                {
+                    b.HasOne("MaintainUk.Api.Domain.Entities.Organisation", "Organisation")
+                        .WithMany("Webhooks")
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organisation");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.WorkOrder", b =>
                 {
                     b.HasOne("MaintainUk.Api.Domain.Entities.User", "AssignedContractor")
@@ -1300,6 +1681,11 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.FeatureFlag", b =>
+                {
+                    b.Navigation("Overrides");
+                });
+
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("Payments");
@@ -1312,14 +1698,25 @@ namespace MaintainUk.Api.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Organisation", b =>
                 {
+                    b.Navigation("ApiKeys");
+
+                    b.Navigation("FeatureFlagOverrides");
+
                     b.Navigation("Properties");
 
                     b.Navigation("Users");
+
+                    b.Navigation("Webhooks");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Property", b =>
                 {
                     b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("MaintainUk.Api.Domain.Entities.SubscriptionPlan", b =>
+                {
+                    b.Navigation("Organisations");
                 });
 
             modelBuilder.Entity("MaintainUk.Api.Domain.Entities.Unit", b =>

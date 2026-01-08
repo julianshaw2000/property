@@ -73,18 +73,18 @@ if (Test-Path $jobsPath) {
     Write-Host "⚠️  Jobs Service path not found: $jobsPath" -ForegroundColor Yellow
 }
 
-# Start Frontend in a new window
-Write-Host "`n🎨 Starting Frontend..." -ForegroundColor Yellow
-$webPath = Join-Path $scriptDir "apps\web"
+# Start Frontend (web-new) in a new window
+Write-Host "`n🎨 Starting Frontend (web-new)..." -ForegroundColor Yellow
+$webPath = Join-Path $scriptDir "apps\web-new"
 if (Test-Path $webPath) {
     Start-Process pwsh -ArgumentList @(
         "-NoExit",
         "-Command",
-        "Set-Location '$webPath'; Write-Host '🎨 Frontend Starting...' -ForegroundColor Cyan; npm start"
+        "Set-Location '$webPath'; Write-Host '🎨 web-new Starting...' -ForegroundColor Cyan; npm start"
     ) -WindowStyle Normal
-    Write-Host "✅ Frontend starting in new window (Port 4200)" -ForegroundColor Green
+    Write-Host "✅ web-new starting in new window (Port 4200)" -ForegroundColor Green
 } else {
-    Write-Host "❌ Frontend path not found: $webPath" -ForegroundColor Red
+    Write-Host "❌ web-new path not found: $webPath" -ForegroundColor Red
 }
 
 Write-Host "`n" -NoNewline

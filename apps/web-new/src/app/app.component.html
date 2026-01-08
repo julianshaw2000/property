@@ -1,0 +1,67 @@
+@if (authService.isAuthenticated()) {
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav #drawer mode="side" opened class="sidenav">
+      <div class="logo">
+        <h2>MaintainUK</h2>
+      </div>
+      <mat-nav-list>
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
+        </a>
+        <a mat-list-item routerLink="/tickets" routerLinkActive="active">
+          <mat-icon>confirmation_number</mat-icon>
+          <span>Tickets</span>
+        </a>
+        <a mat-list-item routerLink="/work-orders" routerLinkActive="active">
+          <mat-icon>build</mat-icon>
+          <span>Work Orders</span>
+        </a>
+        <a mat-list-item routerLink="/quotes" routerLinkActive="active">
+          <mat-icon>description</mat-icon>
+          <span>Quotes</span>
+        </a>
+        <a mat-list-item routerLink="/invoices" routerLinkActive="active">
+          <mat-icon>receipt</mat-icon>
+          <span>Invoices</span>
+        </a>
+        @if (authService.isOrgAdmin()) {
+          <a mat-list-item routerLink="/admin" routerLinkActive="active">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Administration</span>
+          </a>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <mat-toolbar color="primary" class="toolbar">
+        <button mat-icon-button (click)="drawer.toggle()">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="spacer"></span>
+        <div
+          style="margin-right: 16px; padding: 4px 12px; background: rgba(255, 255, 255, 0.2); border-radius: 4px; font-size: 12px;">
+          Role: {{ authService.role() }}
+        </div>
+        <button mat-button [matMenuTriggerFor]="userMenu">
+          <mat-icon>account_circle</mat-icon>
+          My Account
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Logout
+          </button>
+        </mat-menu>
+      </mat-toolbar>
+
+      <div class="content">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet></router-outlet>
+}
+

@@ -14,7 +14,8 @@ describe('AuthService', () => {
     orgId: 'org-456',
     accessToken: 'access-token-xyz',
     refreshToken: 'refresh-token-abc',
-    expiresIn: 3600
+    expiresIn: 3600,
+    role: 'OrgAdmin'
   };
 
   beforeEach(() => {

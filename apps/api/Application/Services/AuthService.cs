@@ -11,15 +11,18 @@ public class AuthService
     private readonly MaintainUkDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
+    private readonly AuditLogService _auditLogService;
 
     public AuthService(
         MaintainUkDbContext context,
         IPasswordHasher passwordHasher,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        AuditLogService auditLogService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
+        _auditLogService = auditLogService;
     }
 
     public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
@@ -39,14 +42,14 @@ public class AuthService
         {
             Name = request.OrgName,
             Slug = GenerateSlug(request.OrgName),
-            Plan = SubscriptionPlan.Free,
+            Plan = Domain.Enums.SubscriptionPlan.Free,
             Status = OrganisationStatus.Active
         };
 
         _context.Organisations.Add(org);
         await _context.SaveChangesAsync();
 
-        // Create user
+        // Create user as initial OrgAdmin for this new organisation
         var user = new User
         {
             OrgId = org.Id,
@@ -59,7 +62,28 @@ public class AuthService
         };
 
         _context.Users.Add(user);
+
+        // If the organisation does not yet have a primary admin, set this first user as PrimaryAdmin
+        if (org.PrimaryAdminUserId == null)
+        {
+            org.PrimaryAdminUserId = user.Id;
+        }
+
         await _context.SaveChangesAsync();
+
+        // Audit: record automatic first-user OrgAdmin + primary admin assignment
+        await _auditLogService.LogAsync(
+            orgId: org.Id,
+            userId: user.Id,
+            action: "ORG_USER_PROMOTED_TO_ADMIN",
+            entityType: "User",
+            entityId: user.Id,
+            changes: new
+            {
+                Reason = "SelfServiceFirstUser",
+                AssignedRole = user.Role.ToString(),
+                org.PrimaryAdminUserId
+            });
 
         // Generate tokens
         var accessToken = _jwtService.GenerateAccessToken(user);
@@ -80,7 +104,10 @@ public class AuthService
             user.OrgId,
             accessToken,
             refreshTokenValue,
-            900 // 15 minutes in seconds
+            900, // 15 minutes in seconds
+            user.Role.ToString(),
+            user.FirstName,
+            user.LastName
         );
     }
 
@@ -129,7 +156,10 @@ public class AuthService
             user.OrgId,
             accessToken,
             refreshTokenValue,
-            900
+            900,
+            user.Role.ToString(),
+            user.FirstName,
+            user.LastName
         );
     }
 
@@ -169,7 +199,10 @@ public class AuthService
             refreshToken.User.OrgId,
             accessToken,
             newRefreshTokenValue,
-            900
+            900,
+            refreshToken.User.Role.ToString(),
+            refreshToken.User.FirstName,
+            refreshToken.User.LastName
         );
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap, BehaviorSubject } from 'rxjs';
 import { ApiService, ApiResponse } from './api.service';
@@ -9,6 +9,7 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  role: string;
 }
 
 export interface LoginRequest {
@@ -37,6 +38,14 @@ export class AuthService {
   isAuthenticated = signal(false);
   userId = signal<string | null>(null);
   orgId = signal<string | null>(null);
+  role = signal<string | null>(null);
+
+  // Computed role checks
+  isSuperAdmin = computed(() => this.role() === 'SuperAdmin');
+  isOrgAdmin = computed(() => {
+    const r = this.role();
+    return r === 'SuperAdmin' || r === 'OrgAdmin';
+  });
 
   constructor() {
     this.loadFromStorage();
@@ -67,10 +76,12 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('orgId');
+    localStorage.removeItem('role');
     this.currentUserSubject.next(null);
     this.isAuthenticated.set(false);
     this.userId.set(null);
     this.orgId.set(null);
+    this.role.set(null);
     this.router.navigate(['/auth/login']);
   }
 
@@ -90,25 +101,38 @@ export class AuthService {
   }
 
   private setAuth(auth: AuthResponse): void {
+    console.log('🔐 Setting auth with role:', auth.role);
     localStorage.setItem('accessToken', auth.accessToken);
     localStorage.setItem('refreshToken', auth.refreshToken);
     localStorage.setItem('userId', auth.userId);
     localStorage.setItem('orgId', auth.orgId);
+    localStorage.setItem('role', auth.role || 'Viewer');
     this.currentUserSubject.next(auth);
     this.isAuthenticated.set(true);
     this.userId.set(auth.userId);
     this.orgId.set(auth.orgId);
+    this.role.set(auth.role || 'Viewer');
+    console.log('✅ Role signal set to:', this.role());
+    console.log('✅ isSuperAdmin():', this.isSuperAdmin());
+    console.log('✅ isOrgAdmin():', this.isOrgAdmin());
   }
 
   private loadFromStorage(): void {
     const accessToken = localStorage.getItem('accessToken');
     const userId = localStorage.getItem('userId');
     const orgId = localStorage.getItem('orgId');
+    const role = localStorage.getItem('role');
+
+    console.log('📦 Loading from storage - role:', role);
 
     if (accessToken && userId && orgId) {
       this.isAuthenticated.set(true);
       this.userId.set(userId);
       this.orgId.set(orgId);
+      this.role.set(role || 'Viewer');
+      console.log('✅ Loaded role signal:', this.role());
+      console.log('✅ isSuperAdmin():', this.isSuperAdmin());
+      console.log('✅ isOrgAdmin():', this.isOrgAdmin());
     }
   }
 }

@@ -40,7 +40,7 @@ import { WorkOrderService, WorkOrder } from '../../work-orders/services/work-ord
         </div>
       } @else if (ticket()) {
         <div class="header">
-          <button mat-icon-button routerLink="/tickets">
+          <button mat-icon-button routerLink="/app/tickets">
             <mat-icon>arrow_back</mat-icon>
           </button>
           <h1>{{ ticket()!.ticketNumber }}</h1>

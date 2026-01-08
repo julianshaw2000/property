@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MaintainUk.Api.Domain.Enums;
 
 namespace MaintainUk.Api.Infrastructure.Extensions;
 
@@ -43,6 +44,27 @@ public static class ClaimsPrincipalExtensions
                      ?? principal.FindFirst("role");
 
         return roleClaim?.Value ?? throw new UnauthorizedAccessException("Role not found in token");
+    }
+
+    public static UserRole GetRoleEnum(this ClaimsPrincipal principal)
+    {
+        var roleString = principal.GetRole();
+        if (Enum.TryParse<UserRole>(roleString, out var role))
+        {
+            return role;
+        }
+        throw new UnauthorizedAccessException($"Invalid role: {roleString}");
+    }
+
+    public static bool IsSuperAdmin(this ClaimsPrincipal principal)
+    {
+        return principal.GetRoleEnum() == UserRole.SuperAdmin;
+    }
+
+    public static bool IsOrgAdmin(this ClaimsPrincipal principal)
+    {
+        var role = principal.GetRoleEnum();
+        return role == UserRole.SuperAdmin || role == UserRole.OrgAdmin;
     }
 }
 

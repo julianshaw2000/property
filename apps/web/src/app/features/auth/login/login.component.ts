@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { getHomeRouteForRole } from '../../../core/utils/role-routes';
 
 @Component({
   selector: 'app-login',
@@ -163,7 +164,10 @@ export class LoginComponent {
     this.authService.login(this.loginForm.value as any).subscribe({
       next: (response) => {
         if (response.data) {
-          this.router.navigate(['/dashboard']);
+          // Get role-based home route
+          const role = this.authService.role();
+          const homeRoute = getHomeRouteForRole(role);
+          this.router.navigate([homeRoute]);
         } else if (response.error) {
           this.errorMessage.set(response.error.message);
         }

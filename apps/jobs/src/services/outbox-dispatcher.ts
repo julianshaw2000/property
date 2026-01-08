@@ -40,7 +40,7 @@ export class OutboxDispatcher {
     try {
       // SELECT FOR UPDATE SKIP LOCKED ensures only one dispatcher instance processes each message
       const result = await client.query(`
-        SELECT "Id", "OrgId", "Type", "Payload", "AvailableAt", "RetryCount"
+        SELECT "Id", "OrgId", "Type", "PayloadJson", "AvailableAt", "Attempts"
         FROM "OutboxMessages"
         WHERE "Status" = 'Pending' AND "AvailableAt" <= NOW()
         ORDER BY "AvailableAt" ASC
@@ -66,8 +66,8 @@ export class OutboxDispatcher {
           // Update retry count
           await client.query(`
             UPDATE "OutboxMessages"
-            SET "RetryCount" = "RetryCount" + 1,
-                "Status" = CASE WHEN "RetryCount" >= 5 THEN 'Failed' ELSE 'Pending' END,
+            SET "Attempts" = "Attempts" + 1,
+                "Status" = CASE WHEN "Attempts" >= 5 THEN 'Failed' ELSE 'Pending' END,
                 "AvailableAt" = NOW() + INTERVAL '5 minutes',
                 "UpdatedAt" = NOW()
             WHERE "Id" = $1
@@ -80,7 +80,7 @@ export class OutboxDispatcher {
   }
 
   private async dispatchMessage(message: any) {
-    const payload = JSON.parse(message.Payload);
+    const payload = JSON.parse(message.PayloadJson);
     const [category, ...rest] = message.Type.split('.');
     const jobType = rest.join('.');
 

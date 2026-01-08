@@ -88,6 +88,11 @@ test-results/
 cypress/screenshots/
 cypress/videos/
 
+# Playwright
+/apps/web/playwright-report/
+/apps/web/test-results/
+/apps/web/.playwright/
+
 # ======================
 # Database
 # ======================
@@ -136,4 +141,6 @@ db.ps1
 scripts/connect-*.ps1
 apps/api-v2/
 .claude/settings.local.json
-
+nu1
+nul
+apps/web-new/.angular/

@@ -35,7 +35,7 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="stat-label">New Tickets</div>
             </div>
           </div>
-          <button mat-button color="primary" routerLink="/tickets">View All</button>
+          <button mat-button color="primary" routerLink="/app/tickets">View All</button>
         </mat-card>
 
         <mat-card class="stat-card">
@@ -46,7 +46,7 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="stat-label">In Progress</div>
             </div>
           </div>
-          <button mat-button color="primary" routerLink="/tickets">View All</button>
+          <button mat-button color="primary" routerLink="/app/tickets">View All</button>
         </mat-card>
 
         <mat-card class="stat-card">
@@ -57,7 +57,7 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="stat-label">Urgent</div>
             </div>
           </div>
-          <button mat-button color="primary" routerLink="/tickets">View All</button>
+          <button mat-button color="primary" routerLink="/app/tickets">View All</button>
         </mat-card>
 
         <mat-card class="stat-card">
@@ -68,7 +68,7 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="stat-label">Completed</div>
             </div>
           </div>
-          <button mat-button color="primary" routerLink="/tickets">View All</button>
+          <button mat-button color="primary" routerLink="/app/tickets">View All</button>
         </mat-card>
       </div>
 
@@ -76,7 +76,7 @@ import { AuthService } from '../../core/services/auth.service';
         <mat-card>
           <mat-card-header>
             <mat-card-title>Recent Tickets</mat-card-title>
-            <button mat-button routerLink="/tickets/create" color="primary">
+            <button mat-button routerLink="/app/tickets/create" color="primary">
               <mat-icon>add</mat-icon>
               New Ticket
             </button>
@@ -106,7 +106,7 @@ import { AuthService } from '../../core/services/auth.service';
               <div class="empty-state">
                 <mat-icon>inbox</mat-icon>
                 <p>No tickets yet. Create your first ticket to get started.</p>
-                <button mat-raised-button color="primary" routerLink="/tickets/create">
+                <button mat-raised-button color="primary" routerLink="/app/tickets/create">
                   Create Ticket
                 </button>
               </div>
@@ -118,25 +118,25 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="quick-actions">
         <h2>Quick Actions</h2>
         <div class="actions-grid">
-          <mat-card class="action-card" routerLink="/tickets/create">
+          <mat-card class="action-card" routerLink="/app/tickets/create">
             <mat-icon>add_circle</mat-icon>
             <h3>Create Ticket</h3>
             <p>Report a new maintenance issue</p>
           </mat-card>
 
-          <mat-card class="action-card" routerLink="/tickets">
+          <mat-card class="action-card" routerLink="/app/tickets">
             <mat-icon>list</mat-icon>
             <h3>View Tickets</h3>
             <p>See all maintenance tickets</p>
           </mat-card>
 
-          <mat-card class="action-card" routerLink="/work-orders">
+          <mat-card class="action-card" routerLink="/app/work-orders">
             <mat-icon>build_circle</mat-icon>
             <h3>Work Orders</h3>
             <p>Manage work orders</p>
           </mat-card>
 
-          <mat-card class="action-card" routerLink="/invoices">
+          <mat-card class="action-card" routerLink="/app/invoices">
             <mat-icon>receipt</mat-icon>
             <h3>Invoices</h3>
             <p>Track payments</p>

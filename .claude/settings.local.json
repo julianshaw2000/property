@@ -33,7 +33,21 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash($env:PGPASSWORD = \"npg_Iz7SaylJ0rhA\")",
+      "Bash(psql \"host=ep-square-king-abq0rqc5-pooler.eu-west-2.aws.neon.tech port=5432 dbname=neondb user=neondb_owner sslmode=require\" -c \"UPDATE \"\"Users\"\" SET \"\"Role\"\" = ''SuperAdmin'' WHERE \"\"Email\"\" = ''admin@demo.maintainuk.com'' RETURNING \"\"Id\"\", \"\"Email\"\", \"\"Role\"\";\")",
+      "Bash(powershell -Command \"$env:PGPASSWORD=''npg_Iz7SaylJ0rhA''; psql -h ep-square-king-abq0rqc5-pooler.eu-west-2.aws.neon.tech -p 5432 -d neondb -U neondb_owner -f create-superadmin.sql\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File run-superadmin-sql.ps1)",
+      "Bash(powershell -ExecutionPolicy Bypass -File test-admin-endpoints.ps1:*)",
+      "Bash(powershell Get-Content \"C:\\\\Users\\\\julia\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C----property\\\\tasks\\\\be85436.output\" -Tail 30)",
+      "Bash(powershell:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "Bash(npx playwright install chromium)",
+      "Bash(test:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(npm run e2e:*)"
     ]
   }
 }

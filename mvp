@@ -1,0 +1,303 @@
+KEYWORD: property maintenance
+
+You are a senior full-stack engineer working in my repo. Implement the minimal monetisation stack for my UK-focused PROPERTY MAINTENANCE SaaS in a **non-breaking, additive way**. Produce code, not theory. Create/modify files directly. Keep changes incremental, feature-flagged, and commit-ready. Existing behaviour must remain unchanged until explicitly enabled via configuration.
+
+Minimal monetisation stack (IMPLEMENT ONLY THESE 4 NOW, ALL ADDITIVE / OPT-IN):
+1) SaaS subscriptions for landlords/agents (plans + trial + entitlements + optional non-payment read-only lock, initially log-only)
+2) Pay-per-lead for contractors (charge on accept + refunds + caps) via new endpoints that do not change existing lead flows
+3) Paid contractor verification (annual fee + badge + review workflow) layered on top of existing contractor model
+4) AI credits (included credits by plan + usage tracking, initially metering-only; blocking is opt-in)
+
+Stack + rules:
+- Frontend: latest Angular (standalone only, signals-first, OnPush), Reactive Forms, Router, Material (or existing UI kit).
+- Backend: .NET Web API, clean layering, Postgres.
+- Payments: Stripe. Use Checkout for purchase + Customer Portal for manage/cancel. Webhooks feed new billing tables but do not replace any existing billing logic until an explicit later phase.
+- Multi-tenant: enforce organisation scoping at API level for all org data.
+- RBAC: SuperAdmin (platform) and OrgAdmin (org).
+- Audit: log every monetisation event (subscription changes, lead charges/refunds, verification purchase, AI usage limit/overage) into new tables without removing existing logging.
+- Security: never store card data; store Stripe IDs only.
+- Docs: update /docs/README.md and create /docs/BILLING.md + /docs/ENTITLEMENTS.md, clearly marking new features as opt-in and non-breaking.
+
+========================================================
+0) DELIVERABLES (CREATE + KEEP UPDATED, NON-BREAKING)
+========================================================
+Backend
+- Stripe integration (customers, checkout, portal links, webhooks) writing to new billing tables only.
+- DB schema + migrations for plans/entitlements/billing state/ledger as strictly additive tables.
+- Entitlements service that can run in log-only mode first, with enforcement behind a feature flag.
+- Org write-lock (non-payment -> read-only) middleware/filter that starts in report-only mode, with enforcement behind a feature flag.
+- Contractor lead charging + refund logic implemented via new endpoints that do not alter existing flows.
+- Contractor verification purchase + status + review endpoints that decorate existing contractor data, without gating access initially.
+- AI credits metering (requests/tokens) with blocking behind a feature flag.
+
+Frontend
+- Org Admin billing page (plan, status, upgrade, portal link, usage vs limits) consuming new endpoints, without removing any existing billing UI.
+- Contractor lead inbox with Accept Lead (triggers new charge path) while leaving any existing lead flow intact.
+- Contractor verification page (buy, upload docs, status) as a new screen.
+- Global UI banners for read-only / billing issues that start as informational only and assume API behaviour is still permissive.
+
+Docs
+- /docs/BILLING.md (Stripe setup, events, lifecycle, feature flags, how to roll out safely).
+- /docs/ENTITLEMENTS.md (limits and gating rules, including log-only vs enforced).
+- /docs/API.md updates for new endpoints, clearly separated from existing APIs.
+
+========================================================
+1) PRICING/PLANS (KEEP SIMPLE, ADDITIVE)
+========================================================
+Create plans (in new tables, without touching existing pricing fields):
+- STARTER
+- PRO
+- BUSINESS
+
+Each plan has entitlements:
+- max_properties (int)
+- max_users (int)
+- max_active_jobs_per_month (int)
+- included_ai_requests_per_month (int)
+- included_ai_tokens_per_month (int)
+
+Trial:
+- 14 days (configurable), tracked only in new billing state.
+
+Non-payment (PHASED, NON-BREAKING):
+- Phase 1: when an org would be locked for non-payment, set org_write_lock=true in new billing table but do not block writes; log intended lock events.
+- Phase 2 (opt-in, via config): allow middleware to block writes with a clear error code "BILLING_LOCK". This must be behind a config flag (default false) and documented.
+
+========================================================
+2) PAY-PER-LEAD (CONTRACTORS, NEW FLOWS ONLY)
+========================================================
+Implement lead pricing (GBP) in new logic:
+- ROUTINE = 5
+- URGENT = 10
+- EMERGENCY = 20
+
+Rules:
+- Charge ONLY when contractor clicks “Accept Lead” via the new accept endpoint.
+- Before accept: show limited job info; hide tenant contact (in the new lead inbox UI).
+- After accept: reveal tenant contact + full details (within the new flow).
+- Refund if job cancelled within X hours or marked duplicate, via new refund endpoint.
+- Daily lead caps per contractor (simple platform setting stored in new platform/org settings or billing tables).
+
+Existing lead/job flows must continue to function unchanged; this new mechanism should be additive and can be adopted gradually.
+
+========================================================
+3) CONTRACTOR VERIFICATION (PAID, DECORATIVE FIRST)
+========================================================
+States:
+- UNVERIFIED -> PENDING_REVIEW -> VERIFIED -> EXPIRED
+
+Flow:
+- Contractor buys annual verification (Stripe Checkout) via new endpoints.
+- On payment success: set PENDING_REVIEW in new verification table + allow doc upload (insurance required).
+- OrgAdmin reviews and marks VERIFIED (or rejects) via new admin endpoints.
+- Show badge to landlords/agents and in contractor profile in a way that does not remove or break existing contractor views.
+
+Pricing:
+- Create a Stripe product/price for annual verification (configurable via config or platform settings).
+
+Initially, verification is used to enhance visibility (badges, search ranking) rather than to gate access to core functionality.
+
+========================================================
+4) AI CREDITS (METERING FIRST, ENFORCEMENT LATER)
+========================================================
+Track usage per org in new tables:
+- requests used per month
+- tokens used per month
+
+Include credits by plan. When exceeded:
+- Phase 1: continue to allow AI calls but log when limits would have been exceeded; record audit events with usage snapshots.
+- Phase 2 (opt-in, via config): block AI calls with error "AI_LIMIT_REACHED" and ensure frontend/job callers handle this gracefully.
+
+Expose usage and, optionally, AI-generated summaries and recommendations on the OrgAdmin billing screen.
+
+========================================================
+5) STRIPE (MUST BE CORRECT, NON-BREAKING)
+========================================================
+- Use Stripe Checkout for:
+  - subscription purchase
+  - contractor verification purchase
+- Use Stripe Customer Portal link for subscription changes/cancel
+- Implement webhooks with signature verification + idempotency table:
+  - checkout.session.completed
+  - customer.subscription.created/updated/deleted
+  - invoice.paid
+  - invoice.payment_failed
+  - payment_intent.succeeded
+  - charge.refunded
+
+Webhook behaviour (PHASED):
+- Phase 1: webhooks write into new billing tables (`organisation_billing`, `billing_events`, `stripe_webhook_events`) only; existing billing status fields remain source of truth for current behaviour.
+- Phase 2 (later, separate change): optionally derive existing status/plan views from new tables once data has been validated.
+- Persist every stripe_event_id and process once (idempotency), but do not remove or alter any existing billing event tables.
+
+========================================================
+6) DATABASE SCHEMA (POSTGRES) + MIGRATIONS (ADDITIVE)
+========================================================
+Add tables (or adapt to repo style), ensuring all changes are additive and do not alter existing tables/columns:
+
+plans(
+  id uuid pk,
+  name text,
+  stripe_price_id text,
+  is_active bool,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+
+plan_entitlements(
+  plan_id uuid fk -> plans(id),
+  max_properties int,
+  max_users int,
+  max_active_jobs_per_month int,
+  included_ai_requests_per_month int,
+  included_ai_tokens_per_month int
+)
+
+organisation_billing(
+  organisation_id uuid pk fk (nullable FKs where needed to avoid migration failures),
+  plan_id uuid null,
+  trial_ends_at timestamptz null,
+  status text, -- TRIALING|ACTIVE|PAST_DUE|CANCELED|READ_ONLY (documented, not enforced as enum)
+  grace_days int null,
+  org_write_lock bool default false,
+  stripe_customer_id text null,
+  stripe_subscription_id text null,
+  current_period_end timestamptz null,
+  updated_at timestamptz
+)
+
+billing_events(
+  id uuid pk,
+  at timestamptz,
+  organisation_id uuid null,
+  type text,
+  stripe_event_id text null,
+  stripe_object_id text null,
+  amount_gbp numeric null,
+  meta jsonb
+)
+
+stripe_webhook_events(
+  stripe_event_id text pk,
+  received_at timestamptz,
+  processed_at timestamptz null,
+  status text,
+  error text null
+)
+
+job_leads(
+  id uuid pk,
+  organisation_id uuid null,
+  job_id uuid null,
+  contractor_id uuid null,
+  urgency text,
+  status text,
+  lead_price_gbp numeric,
+  stripe_payment_intent_id text null,
+  offered_at timestamptz,
+  accepted_at timestamptz null
+)
+
+contractor_verification(
+  contractor_id uuid pk,
+  status text,
+  expires_at timestamptz null,
+  stripe_payment_intent_id text null,
+  updated_at timestamptz
+)
+
+contractor_verification_docs(
+  id uuid pk,
+  contractor_id uuid,
+  doc_type text,
+  file_url text,
+  uploaded_at timestamptz
+)
+
+ai_usage_monthly(
+  organisation_id uuid,
+  month date,
+  requests_used int,
+  tokens_used int,
+  primary key (organisation_id, month)
+)
+
+Add indexes where needed for performance, without altering existing indexes/tables.
+
+========================================================
+7) BACKEND ENFORCEMENT POINTS (PHASED, FLAGGED)
+========================================================
+- Create EntitlementsService:
+  - Phase 1: computes whether a create property/user/job would exceed plan limits and logs "PLAN_LIMIT_REACHED" events without blocking.
+  - Phase 2 (via feature flag): blocks create property/user/job when over plan limit ("PLAN_LIMIT_REACHED").
+- Create WriteLock middleware/filter:
+  - Phase 1: when org_write_lock=true, logs that "BILLING_LOCK would apply" but allows the request.
+  - Phase 2 (via feature flag): blocks all non-SuperAdmin writes when org_write_lock=true ("BILLING_LOCK").
+- Charge/refund endpoints write:
+  - billing_events
+  - audit_log
+  - without removing or changing any existing audit mechanisms.
+
+Core endpoints to add (all new, additive):
+- Org billing:
+  - GET /api/orgs/{orgId}/billing
+  - POST /api/orgs/{orgId}/billing/checkout (plan purchase)
+  - GET /api/orgs/{orgId}/billing/portal-link
+- Stripe webhooks:
+  - POST /api/stripe/webhook
+- Contractor leads:
+  - GET /api/contractors/{contractorId}/leads
+  - POST /api/contractors/{contractorId}/leads/{leadId}/accept
+  - POST /api/orgs/{orgId}/leads/{leadId}/refund
+- Contractor verification:
+  - POST /api/contractors/{contractorId}/verification/checkout
+  - POST /api/contractors/{contractorId}/verification/docs
+  - GET  /api/orgs/{orgId}/verification/pending
+  - POST /api/orgs/{orgId}/contractors/{contractorId}/verify
+  - POST /api/orgs/{orgId}/contractors/{contractorId}/reject
+- AI usage:
+  - GET /api/orgs/{orgId}/ai/usage
+
+Tests:
+- webhook idempotency
+- (Phase 2) org write-lock blocks writes when flag is enabled
+- (Phase 2) plan limits block creates when flag is enabled
+- lead accept charges once
+- refund updates state + logs
+- (Phase 2) AI usage blocks at limit when flag is enabled
+
+========================================================
+8) FRONTEND (ANGULAR) SCREENS (MINIMAL, ADDITIVE)
+========================================================
+Org Admin:
+- /org-admin/billing
+  - plan + status + trial end from new billing endpoints
+  - upgrade button -> checkout redirect
+  - manage billing -> portal link
+  - usage widgets vs limits (properties/users/jobs/AI), powered by new billing + AI usage APIs
+
+Contractor:
+- /contractor/leads
+  - list leads from new endpoints, accept lead (charge) then reveal details
+- /contractor/verification
+  - status, buy verification, upload docs using new endpoints
+
+Global:
+- banners for READ_ONLY / PAST_DUE with “Fix billing” button, initially informational only (do not assume writes are actually blocked).
+
+Existing pages and navigation must continue to work unchanged; new screens are added via new routes and menu items.
+
+========================================================
+9) EXECUTION ORDER (SAFE, NON-BREAKING)
+========================================================
+1) Scan repo patterns (auth, org scoping, storage, EF/DB setup, UI shell) and identify any existing billing/lead/contractor/AI logic that must remain untouched.
+2) Add DB migrations for all monetisation tables as additive schema changes with safe nullability and no new constraints on existing tables.
+3) Implement Stripe integration + webhooks + billing state updates that only write to new tables and do not alter existing billing behaviour.
+4) Implement EntitlementsService + WriteLock middleware in log-only mode, behind feature flags (default false).
+5) Implement contractor pay-per-lead charge/refund using new tables + endpoints, leaving existing lead flows unchanged.
+6) Implement contractor verification purchase + docs + review using new tables + endpoints, initially only enhancing visibility/badges.
+7) Implement AI usage metering + limits in metering-only mode, logging when limits would be exceeded without blocking.
+8) Build Angular screens + banners, wiring them to the new APIs while keeping existing screens intact.
+9) Update docs and ensure build/tests pass, documenting how and when to safely enable enforcement flags in each environment.
+
+Start now. Create the files and commit-ready changes, ensuring that all new monetisation behaviour is opt-in and cannot break existing flows until explicitly enabled.

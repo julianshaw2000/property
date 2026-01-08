@@ -11,7 +11,7 @@ public class Organisation : IHasTimestamps
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
-    public SubscriptionPlan Plan { get; set; } = SubscriptionPlan.Free;
+    public Domain.Enums.SubscriptionPlan Plan { get; set; } = Domain.Enums.SubscriptionPlan.Free; // Legacy enum field
     public OrganisationStatus Status { get; set; } = OrganisationStatus.Active;
     public string? BillingEmail { get; set; }
     public string? StripeCustomerId { get; set; }
@@ -22,8 +22,30 @@ public class Organisation : IHasTimestamps
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    // Primary admin designation
+    public Guid? PrimaryAdminUserId { get; set; }
+
+    // New plan relationship (replaces enum in future)
+    public Guid? PlanId { get; set; }
+    public string BillingCycle { get; set; } = "monthly"; // monthly, annually
+    public DateTime? TrialEndsAt { get; set; }
+    public DateTime? LastActivityAt { get; set; }
+
+    // Branding
+    public string? BrandingLogoUrl { get; set; }
+    public string? BrandingPrimaryColor { get; set; }
+
+    // Localization
+    public string Timezone { get; set; } = "Europe/London";
+    public string Locale { get; set; } = "en-GB";
+
     // Navigation properties
+    public User? PrimaryAdmin { get; set; }
+    public Entities.SubscriptionPlan? SubscriptionPlan { get; set; }
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Property> Properties { get; set; } = new List<Property>();
+    public ICollection<FeatureFlagOverride> FeatureFlagOverrides { get; set; } = new List<FeatureFlagOverride>();
+    public ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
+    public ICollection<Webhook> Webhooks { get; set; } = new List<Webhook>();
 }
 

@@ -17,6 +17,10 @@ public class User : BaseEntity
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
 
+    // MFA fields
+    public bool MfaEnabled { get; set; }
+    public string? MfaSecret { get; set; }
+
     // Navigation
     public Organisation Organisation { get; set; } = null!;
 }

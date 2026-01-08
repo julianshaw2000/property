@@ -5,6 +5,9 @@ public record AuthResponse(
     Guid OrgId,
     string AccessToken,
     string RefreshToken,
-    int ExpiresIn
+    int ExpiresIn,
+    string Role,
+    string? FirstName,
+    string? LastName
 );
 
